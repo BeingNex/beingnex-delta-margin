@@ -1,1 +1,674 @@
-being-delta-margin-explorer.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>BeingNex Delta Profit Margin Model</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #131313;
+    --surface2: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0ede8;
+    --text-muted: #888;
+    --text-dim: #555;
+    --green: #1D9E75;
+    --green-light: #5DCAA5;
+    --blue: #378ADD;
+    --coral: #D85A30;
+    --amber: #BA7517;
+    --accent: #1D9E75;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  html { background: var(--bg); }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.6s ease forwards;
+  }
+
+  .brand-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .brand-tag::before {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 7vw, 42px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 480px;
+  }
+
+  /* Tier pills */
+  .tiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.1s ease forwards;
+  }
+
+  .tier-pill {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border2);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .tier-pill.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(29,158,117,0.08);
+  }
+
+  /* Slider section */
+  .slider-section {
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s ease forwards;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+
+  .slider-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .slider-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+    transition: transform 0.15s;
+  }
+
+  input[type=range]:active::-webkit-slider-thumb {
+    transform: scale(1.2);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .slider-range {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* Metrics grid */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.3s ease forwards;
+  }
+
+  @media (min-width: 480px) {
+    .metrics { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .metric-card:hover { border-color: var(--border2); }
+
+  .metric-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .metric-val {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  .metric-val.green { color: var(--green); }
+  .metric-val.coral { color: var(--coral); }
+  .metric-val.blue  { color: var(--blue);  }
+
+  /* Breakdown box */
+  .breakdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 28px;
+    font-size: 12px;
+    line-height: 2;
+    color: var(--text-muted);
+    opacity: 0;
+    animation: fadeUp 0.6s 0.35s ease forwards;
+    transition: all 0.2s;
+  }
+
+  .breakdown .b-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .breakdown .b-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .breakdown .b-result { color: var(--text); font-weight: 500; }
+  .breakdown .b-plus { color: var(--text-dim); margin: 0 4px; }
+
+  .breakdown-total {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .breakdown-total .tot-label { color: var(--text-dim); }
+  .breakdown-total .tot-val { color: var(--text); font-weight: 500; }
+
+  /* Chart */
+  .chart-section {
+    opacity: 0;
+    animation: fadeUp 0.6s 0.4s ease forwards;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chart-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 240px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.5s ease forwards;
+  }
+
+  .footer strong {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .model-note {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text-dim);
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.7;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Progress bar under slider */
+  .slider-track-wrap {
+    position: relative;
+    margin-bottom: 4px;
+  }
+
+  .slider-progress {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 2px;
+    transform: translateY(-50%);
+    background: var(--accent);
+    border-radius: 2px;
+    pointer-events: none;
+    transition: width 0.05s;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="brand-tag">Being Delta · Pricing Model</div>
+    <h1>Marginal <span>Fee</span><br>Calculator</h1>
+    <p class="header-sub">A peer-to-peer platform fee model. Drag the slider to explore how fees are calculated at any revenue level — every dollar is only taxed at the rate for its bracket.</p>
+  </div>
+
+  <div class="tiers" id="tier-pills">
+    <div class="tier-pill" data-tier="0">10% · &lt;$100</div>
+    <div class="tier-pill" data-tier="1">8% · $100–$250</div>
+    <div class="tier-pill" data-tier="2">6% · $250–$1k</div>
+    <div class="tier-pill" data-tier="3">4% · $1k–$10k</div>
+    <div class="tier-pill" data-tier="4">3% · $10k–$20k</div>
+    <div class="tier-pill" data-tier="5">1.5% · $20k+</div>
+  </div>
+
+  <div class="slider-section">
+    <div class="slider-header">
+      <span class="slider-label">Revenue</span>
+      <span class="slider-value" id="rev-display">$0</span>
+    </div>
+    <div class="slider-track-wrap">
+      <div class="slider-progress" id="slider-progress"></div>
+      <input type="range" id="rev-slider" min="0" max="1000" value="350" step="1">
+    </div>
+    <div class="slider-range">
+      <span>$0</span>
+      <span>$50,000</span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">Revenue</div>
+      <div class="metric-val" id="m-revenue">$0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Platform fee</div>
+      <div class="metric-val coral" id="m-fee">$0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Contractor gets</div>
+      <div class="metric-val blue" id="m-payout">$0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Effective rate</div>
+      <div class="metric-val green" id="m-rate">0%</div>
+    </div>
+  </div>
+
+  <div class="breakdown" id="breakdown">
+    <div style="color: #555; font-size: 12px;">Move the slider to see the bracket breakdown.</div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-header">
+      <span class="chart-title">Fee curve · $0 – $50k</span>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#1D9E75;"></div>platform fee ($)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#378ADD; opacity:0.7;"></div>effective rate (%)</div>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="main-chart"></canvas>
+    </div>
+  </div>
+
+  <div class="footer">
+    <strong>Being Delta</strong> · Peer-to-peer task marketplace
+    <div class="model-note">All revenue above the platform fee is paid directly to the contractor. Each bracket applies only to that slice of revenue.</div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const TIERS = [
+  { min:0,     max:100,      rate:0.100, label:'first $100',        color:'#1D9E75' },
+  { min:100,   max:250,      rate:0.080, label:'$100–$250',          color:'#5DCAA5' },
+  { min:250,   max:1000,     rate:0.060, label:'$250–$1,000',        color:'#378ADD' },
+  { min:1000,  max:10000,    rate:0.040, label:'$1,000–$10,000',     color:'#185FA5' },
+  { min:10000, max:20000,    rate:0.030, label:'$10,000–$20,000',    color:'#BA7517' },
+  { min:20000, max:Infinity, rate:0.015, label:'above $20,000',      color:'#D85A30' },
+];
+
+function activeTierIndex(rev) {
+  for (let i = TIERS.length - 1; i >= 0; i--) {
+    if (rev > TIERS[i].min) return i;
+  }
+  return 0;
+}
+
+function marginalFee(rev) {
+  let fee = 0;
+  for (const t of TIERS) {
+    if (rev <= t.min) break;
+    const slice = Math.min(rev, t.max === Infinity ? rev : t.max) - t.min;
+    fee += slice * t.rate;
+  }
+  return fee;
+}
+
+function tierBreakdown(rev) {
+  const parts = [];
+  for (const t of TIERS) {
+    if (rev <= t.min) break;
+    const slice = Math.min(rev, t.max === Infinity ? rev : t.max) - t.min;
+    parts.push({ label: t.label, slice, rate: t.rate, fee: slice * t.rate, color: t.color });
+  }
+  return parts;
+}
+
+function fmtFull(n) {
+  return '$' + n.toLocaleString('en-AU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtShort(n) {
+  if (n >= 1000) return '$' + (n/1000).toFixed(n >= 10000 ? 0 : 1) + 'k';
+  return '$' + Math.round(n);
+}
+function sliderToRev(v) {
+  return Math.round(Math.pow(v / 1000, 2.5) * 50000);
+}
+
+// Build chart data
+const N = 300;
+const chartRevs = [], chartFees = [], chartRates = [];
+for (let i = 0; i <= N; i++) {
+  const rev = Math.round(Math.pow(i/N, 2.5) * 50000);
+  const fee = marginalFee(rev);
+  chartRevs.push(rev);
+  chartFees.push(+fee.toFixed(2));
+  chartRates.push(rev > 0 ? +(fee/rev*100).toFixed(3) : 10);
+}
+
+const chart = new Chart(document.getElementById('main-chart'), {
+  type: 'line',
+  data: {
+    labels: chartRevs,
+    datasets: [
+      {
+        label: 'Platform fee ($)',
+        data: chartFees,
+        borderColor: '#1D9E75',
+        backgroundColor: 'rgba(29,158,117,0.06)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 2,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Effective rate (%)',
+        data: chartRates,
+        borderColor: 'rgba(55,138,221,0.7)',
+        backgroundColor: 'transparent',
+        fill: false,
+        tension: 0.3,
+        pointRadius: 0,
+        borderWidth: 1.5,
+        borderDash: [5,3],
+        yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1a1a1a',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        titleColor: '#888',
+        bodyColor: '#f0ede8',
+        titleFont: { family: "'DM Mono', monospace", size: 11 },
+        bodyFont: { family: "'DM Mono', monospace", size: 12 },
+        callbacks: {
+          title: items => 'Rev: $' + Number(items[0].label).toLocaleString(),
+          label: item => item.datasetIndex === 0
+            ? 'Fee: $' + item.parsed.y.toFixed(2)
+            : 'Rate: ' + item.parsed.y.toFixed(2) + '%'
+        }
+      }
+    },
+    scales: {
+      x: {
+        type: 'linear',
+        min: 0,
+        max: 50000,
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#555', font: { family: "'DM Mono', monospace", size: 10 }, maxTicksLimit: 7, callback: v => fmtShort(v) }
+      },
+      y: {
+        position: 'left',
+        min: 0,
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { color: '#1D9E75', font: { family: "'DM Mono', monospace", size: 10 }, callback: v => '$' + v },
+      },
+      y2: {
+        position: 'right',
+        min: 0,
+        max: 12,
+        grid: { drawOnChartArea: false },
+        ticks: { color: 'rgba(55,138,221,0.7)', font: { family: "'DM Mono', monospace", size: 10 }, callback: v => v + '%' },
+      }
+    }
+  }
+});
+
+// Cursor line plugin
+const cursorPlugin = {
+  id: 'cursor',
+  afterDraw(c) {
+    if (c._cursorX == null) return;
+    const { ctx, chartArea, scales } = c;
+    const x = scales.x.getPixelForValue(c._cursorX);
+    if (x < chartArea.left || x > chartArea.right) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,3]);
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+Chart.register(cursorPlugin);
+
+function update(sliderVal) {
+  const rev = sliderToRev(sliderVal);
+  const fee = marginalFee(rev);
+  const payout = rev - fee;
+  const effRate = rev > 0 ? (fee / rev * 100) : 0;
+  const parts = tierBreakdown(rev);
+  const ti = activeTierIndex(rev);
+
+  // Update displays
+  document.getElementById('rev-display').textContent = fmtFull(rev);
+  document.getElementById('m-revenue').textContent = fmtFull(rev);
+  document.getElementById('m-fee').textContent = fmtFull(fee);
+  document.getElementById('m-payout').textContent = fmtFull(payout);
+  document.getElementById('m-rate').textContent = effRate.toFixed(2) + '%';
+
+  // Update tier pills
+  document.querySelectorAll('.tier-pill').forEach((el, i) => {
+    el.classList.toggle('active', i === ti);
+  });
+
+  // Slider progress
+  const pct = sliderVal / 1000 * 100;
+  document.getElementById('slider-progress').style.width = pct + '%';
+
+  // Breakdown
+  const bd = document.getElementById('breakdown');
+  if (parts.length === 0) {
+    bd.innerHTML = '<div style="color:#555;font-size:12px;">Move the slider to see the bracket breakdown.</div>';
+  } else {
+    let html = '<div class="b-row">';
+    parts.forEach((p, i) => {
+      if (i > 0) html += '<span class="b-plus">+</span>';
+      html += `<span class="b-tag" style="color:${p.color};background:${p.color}18;">${(p.rate*100).toFixed(1)}% of ${fmtFull(p.slice)}</span>`;
+      html += `<span class="b-result">= ${fmtFull(p.fee)}</span>`;
+    });
+    html += '</div>';
+    html += `<div class="breakdown-total">
+      <span><span class="tot-label">Platform fee</span> <span class="tot-val">${fmtFull(fee)}</span></span>
+      <span><span class="tot-label">Contractor receives</span> <span class="tot-val" style="color:#378ADD;">${fmtFull(payout)}</span></span>
+    </div>`;
+    bd.innerHTML = html;
+  }
+
+  chart._cursorX = rev;
+  chart.update('none');
+}
+
+document.getElementById('rev-slider').addEventListener('input', e => update(+e.target.value));
+update(350);
+</script>
+</body>
+</html>
